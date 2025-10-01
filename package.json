@@ -1,0 +1,25 @@
+{
+  "name": "send_file_speedly",
+  "version": "1.0.0",
+  "description": "Envoyez rapidement un fichier sur plusieurs appareils a la fois , plus besoin d'utiliser wathsapp .",
+  "main": "serveur.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon serveur.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbroumsadja/send_file_speedly.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mbroumsadja/send_file_speedly/issues"
+  },
+  "homepage": "https://github.com/mbroumsadja/send_file_speedly#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "sqlite3": "^5.1.7"
+  }
+}
