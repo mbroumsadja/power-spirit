@@ -1,0 +1,60 @@
+html
+  head
+    title power spirite
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    link(rel="stylesheet", href="/static/style.css")
+    script(src="https://cdn.socket.io/4.7.5/socket.io.min.js")
+  body
+    div.gauche
+      .logo 
+        img(src="/static/power.png", alt="", srcset="" , width="25")
+        strong Power Spirit
+      button(type="submit") Create Room 
+      h2 Public Room
+      ul 
+        li Room1 
+        li Room2  
+        li Room2
+        li Room2
+        li Room2
+      h2 Private Room
+      ol 
+        li Room1 
+        li Room2  
+        li Room2
+        li Room2
+        li Room2
+    div.droite
+      h1 PUBLIC ROOM 
+      div.chat
+        .textr
+          .sender 
+            span Mbroumsadja
+          .file 
+            span 12:34 ::
+            span Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quaerat repudiandae, delectus corrupti odit, ducimus in, excepturi officiis nostrum vero vitae nesciunt quasi architecto saepe vel quos possimus velit dolorum a?
+        .textl
+          .sender 
+            span Sebastien
+          .file 
+            span 12:35 ::
+            span Bonjour broder ! Comment est ce que tu ?
+                .textr
+          .sender 
+            span Mbroumsadja
+          .file 
+            span 12:34 ::
+            span Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quaerat repudiandae, delectus corrupti odit, ducimus in, excepturi officiis nostrum vero vitae nesciunt quasi architecto saepe vel quos possimus velit dolorum a?
+      div.send
+        .send_texte
+          form(action="/message", method="post") 
+          input(type="text", name="") 
+          button(type="submit") send
+          form(action="/upload", method="post")
+          input(type="file", name="")
+          button(type="submit") send
+          script(src="/static/index.js")
+        .user 
+          button(type="button") EM 
+          span connected

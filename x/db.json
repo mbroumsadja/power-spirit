@@ -1,0 +1,12 @@
+[
+  {
+    "title": "modelisation de la base de donner avec sqlite",
+    "description": "realise toutes les attribut des room , user , des message , des invitation ",
+    "label": "Urgent"
+  },
+  {
+    "title": "realiser pour chaque table le crud qui convient et la gestion des id de connetion , et mots de passe d'invitation",
+    "description": "simple a faire ",
+    "label": "Urgent"
+  }
+]

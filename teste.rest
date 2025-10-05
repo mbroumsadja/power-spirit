@@ -1,0 +1,68 @@
+### CREATE USER
+POST http://localhost:3300/users
+Content-Type: application/json
+
+{
+  "nom": "John Doe",
+  "email": "john@example.com"
+}
+
+###
+
+### DELETE USER
+DELETE http://localhost:3300/users/1
+
+###
+
+### ========================================
+### 2. ROOMS
+
+### CREATE ROOM
+POST http://localhost:3300/rooms
+Content-Type: application/json
+
+{
+  "nom": "Chao General",
+  "etat": "public"
+}
+
+###
+
+### GET ALL ROOMS Public
+GET http://localhost:3300/rooms/public
+
+###
+
+### GET ALL ROOMS Private
+GET http://localhost:3300/rooms/private
+###
+
+### DELETE ROOM
+DELETE http://localhost:3300/rooms/1
+
+### ========================================
+### 4. MESSAGES
+###
+
+### CREATE MESSAGE
+POST http://localhost:3300/messages
+Content-Type: application/json
+
+{
+  "sender_id": 2,
+  "receiver_id": 1,
+  "content": "Hello, this is a test message!"
+}
+
+###
+
+### GET ALL MESSAGES
+GET http://localhost:3300/messages
+
+###
+
+### DELETE MESSAGE (remplace :ID par un ID réel, ex. 1)
+DELETE http://localhost:3300/messages/1
+
+###
+POST http://localhost:3300/messages/1
