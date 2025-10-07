@@ -5,7 +5,7 @@
 **send_file_speedly** est une application realiser dans le but de transferer rapidement et de maniere sécurisé de fichiers entre plusieurs appareils, sans avoir besoin d'utiliser WhatsApp ou d'autres messageries.par exemple entre tes appareil, ou avec plusieurs collègues en ligne.
 
 ## Fonctionnalités
-
+- connecter a la room
 - Transfert de fichiers rapide entre différents appareils
 - Partage simultané à plusieurs utilisateurs
 - Sécurité renforcée pour les échanges de fichiers
@@ -32,16 +32,7 @@ elle ne gere que quel que aspect de la messagerie en ligne mais neamoins utilise
 - style sheet cascading 
 
 ## Routes
-/create user
-/delete user
-/create room
-/delete room
-/getAll public room
-/getAll private room
-/delete room
-/send message and file
-/get all message by receiver
-/delete message or file
+/ (route principale)
 
 ## Base de donnee
 
@@ -50,13 +41,11 @@ elle ne gere que quel que aspect de la messagerie en ligne mais neamoins utilise
 **Table sql**
 user { id_user ,nom , email}
 room { id_room ,nom ,access, etat}
-message{ id_room, content , taille, , sender_id , receiver_id}
+message{ id_maessage, id_room, content , taille, , sender_id , receiver_id}
 
 ## Gestion des taches
 
 kanban de **Germin**
-
-## Utilisation
 
 ## Contribuer
 

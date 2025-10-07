@@ -1,60 +1,29 @@
-html
+doctype html
+html(lang="fr")
   head
-    title power spirite
-    meta(charset="utf-8")
-    meta(name="viewport" content="width=device-width, initial-scale=1")
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Power Spirit
     link(rel="stylesheet", href="/static/style.css")
-    script(src="https://cdn.socket.io/4.7.5/socket.io.min.js")
+
   body
-    div.gauche
+    div.power
       .logo 
-        img(src="/static/power.png", alt="", srcset="" , width="25")
-        strong Power Spirit
-      button(type="submit") Create Room 
-      h2 Public Room
-      ul 
-        li Room1 
-        li Room2  
-        li Room2
-        li Room2
-        li Room2
-      h2 Private Room
-      ol 
-        li Room1 
-        li Room2  
-        li Room2
-        li Room2
-        li Room2
-    div.droite
-      h1 PUBLIC ROOM 
-      div.chat
-        .textr
-          .sender 
-            span Mbroumsadja
-          .file 
-            span 12:34 ::
-            span Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quaerat repudiandae, delectus corrupti odit, ducimus in, excepturi officiis nostrum vero vitae nesciunt quasi architecto saepe vel quos possimus velit dolorum a?
-        .textl
-          .sender 
-            span Sebastien
-          .file 
-            span 12:35 ::
-            span Bonjour broder ! Comment est ce que tu ?
-                .textr
-          .sender 
-            span Mbroumsadja
-          .file 
-            span 12:34 ::
-            span Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quaerat repudiandae, delectus corrupti odit, ducimus in, excepturi officiis nostrum vero vitae nesciunt quasi architecto saepe vel quos possimus velit dolorum a?
-      div.send
-        .send_texte
-          form(action="/message", method="post") 
-          input(type="text", name="") 
-          button(type="submit") send
-          form(action="/upload", method="post")
-          input(type="file", name="")
-          button(type="submit") send
-          script(src="/static/index.js")
-        .user 
-          button(type="button") EM 
-          span connected
+        img(src="/static/power.png", alt="", srcset="" , width="37")
+        strong POWER SPIRIT
+        span#user-count-number 0
+    #messages
+    
+    #form-container
+      input#username-input(placeholder="Votre nom" required autocomplete="off")
+      #upload-status.upload-progress
+      form#form
+        input#input(placeholder="Message..." required autocomplete="off")
+        button.btn#file-btn(type="button" title="Joindre un fichier")
+          | 📎
+        button.btn#send-btn(type="submit" title="Envoyer")
+          | ➤
+      input#file-input(type="file" accept="image/*,application/pdf,.doc,.docx,.txt" enctype="multipart/form-data")
+
+    script(src="/socket.io/socket.io.js")
+    script(src="/static/index.js")
