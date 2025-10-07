@@ -75,16 +75,16 @@ fileInput.addEventListener('change', async (e) => {
       const data = await response.json();
       
       if (data.success) {
-        uploadStatus.textContent = '✅ Fichier envoyé !';
+        uploadStatus.textContent = "";
         setTimeout(() => {
           uploadStatus.textContent = '';
         }, 3000);
       } else {
-        uploadStatus.textContent = '❌ Erreur lors de l\'envoi';
+        uploadStatus.textContent = '';
       }
     } catch (error) {
       console.error('Erreur:', error);
-      uploadStatus.textContent = '❌ Erreur lors de l\'envoi';
+      uploadStatus.textContent = '';
     } finally {
       fileBtn.classList.remove('uploading');
       fileInput.value = ''; // Reset
