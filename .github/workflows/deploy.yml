@@ -1,13 +1,27 @@
-name: Hello World Workflow
+name: Deploy via SSH
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  say-hello:
+  deploy:
     runs-on: ubuntu-latest
-    
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Dire bonjour
-        run: echo "Hello, world!" 
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          echo "connected successful!"
+          script: |
+            cd /home/mbroumsadja/send_file_speedly
+            git pull origin main
+            echo "Deployment successful!"
