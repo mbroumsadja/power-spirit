@@ -20,7 +20,8 @@
 
 ## Utilisation 
 
-<video src="./public/powe-spirit-demo.webm" alt="Texte alternatif" autoplay></video>/>
+[![Demo](https://img.youtube.com/vi/wOcFVUuu1vM/0.jpg)](https://www.youtube.com/watch?v=wOcFVUuu1vM)
+
 
 ## Technologies utilisées
 
