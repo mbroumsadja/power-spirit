@@ -20,5 +20,5 @@ jobs:
                 ssh-keyscan ssh-mbroumsadja.alwaysdata.net >> ~/.ssh/known_hosts
             - name: synchronisation avec mon serveur
               run: |
-                rsync -avz --delete ./ton_dossier_local/ \
+                rsync -avz --delete ./send_file_speedly/ \
                 mbroumsadja@ssh-mbroumsadja.alwaysdata.net:/home/mbroumsadja/send_file_speedly/
