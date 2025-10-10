@@ -40,10 +40,6 @@ jobs:
           ssh -v mbroumsadja@ssh-mbroumsadja.alwaysdata.net "echo 'Connexion SSH réussie'"  # -v pour logs détaillés
           echo "SSH exit code: $?"
 
-      - name: Création dossier distant si besoin
-        run: |
-          ssh mbroumsadja@ssh-mbroumsadja.alwaysdata.net "mkdir -p /home/mbroumsadja/send_file_speedly/"
-
       - name: Synchronisation avec le serveur
         run: |
           rsync -avz --delete -e "ssh -v" \
