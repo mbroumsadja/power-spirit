@@ -15,7 +15,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }} # L'adresse de ton serveur
           username: ${{ secrets.SSH_USER }} # Ton nom d'utilisateur SSH
-          key: ${{ secrets.SSH_KEY }} # Le secret contenant ta clé privée SSH
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Le secret contenant ta clé privée SSH
           port: 22
           script: |
             # Navigue vers le répertoire de ton projet sur le serveur
