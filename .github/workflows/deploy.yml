@@ -1,4 +1,4 @@
-name: Deploy to AlwaysData
+name: Déploiement automatique
 
 on:
   push:
@@ -10,19 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Étape 1 : Cloner le dépôt GitHub
-      - name: Checkout code
+      - name: Récupération du code
         uses: actions/checkout@v4
 
-      # Étape 2 : Configurer la clé SSH
-      - name: Install SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ssh-mbroumsadja.alwaysdata.com >> ~/.ssh/known_hosts
-
-      # Étape 3 : Synchroniser le répertoire racine avec AlwaysData via SCP
-      - name: Deploy to AlwaysData
-        run: |
-          scp -r ./* mbroumsadja@ssh-mbroumsadja.alwaysdata.com:/home/mbroumsadja/send_file_speedly
+      - name: Déploiement sur Alwaysdata avec SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ssh-mbroumsadja.alwaysdata.net
+          username: mbroumsadja
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            rsync -avz --delete /home/runner/work/send_file_speedly/send_file_speedly/ \
+            /home/mbroumsadja/send_file_speedly/
