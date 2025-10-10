@@ -13,19 +13,40 @@ jobs:
       - name: Récupération du code
         uses: actions/checkout@v4
 
+      - name: Débogage contenu répertoire
+        run: ls -la  # Vérifie que ./send_file_speedly/ existe
+
       - name: Configuration SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_ed25519  # Nettoie les retours à la ligne
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ssh-mbroumsadja.alwaysdata.net >> ~/.ssh/known_hosts
           
+          # Config SSH pour forcer la clé et éviter tentatives multiples
+          echo "Host ssh-mbroumsadja.alwaysdata.net" > ~/.ssh/config
+          echo "  HostName ssh-mbroumsadja.alwaysdata.net" >> ~/.ssh/config
+          echo "  User mbroumsadja" >> ~/.ssh/config
+          echo "  Port 2222" >> ~/.ssh/config  # Changez en 22 si nécessaire
+          echo "  IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
+          echo "  IdentitiesOnly yes" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          
+          ssh-keyscan -H -p 2222 ssh-mbroumsadja.alwaysdata.net >> ~/.ssh/known_hosts  # Adaptez le port
+          cat ~/.ssh/config  # Débogage
+          cat ~/.ssh/known_hosts  # Débogage
+
       - name: Test de connexion SSH
         run: |
-          ssh -o StrictHostKeyChecking=no mbroumsadja@ssh-mbroumsadja.alwaysdata.net "echo 'Connexion SSH réussie'"
+          ssh -v mbroumsadja@ssh-mbroumsadja.alwaysdata.net "echo 'Connexion SSH réussie'"  # -v pour logs détaillés
+          echo "SSH exit code: $?"
+
+      - name: Création dossier distant si besoin
+        run: |
+          ssh mbroumsadja@ssh-mbroumsadja.alwaysdata.net "mkdir -p /home/mbroumsadja/send_file_speedly/"
 
       - name: Synchronisation avec le serveur
         run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+          rsync -avz --delete -e "ssh -v" \
           ./send_file_speedly/ \
           mbroumsadja@ssh-mbroumsadja.alwaysdata.net:/home/mbroumsadja/send_file_speedly/
+          echo "rsync exit code: $?"
