@@ -21,5 +21,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            rsync -avz --delete /home/runner/work/send_file_speedly/send_file_speedly/ \
-            /home/mbroumsadja/send_file_speedly/
+            rsync -avz --delete /github/workspace/ /home/mbroumsadja/send_file_speedly/
