@@ -1,15 +1,13 @@
-name: Déploiement via SSH et Git Pull
+name: Hello World Workflow
 
-on:
-  push:
-    branches:
-      - main # Déclenche le workflow à chaque push sur la branche 'main'
+on: [push]
 
 jobs:
-  deploy:
+  say-hello:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Connexion au serveur et Git Pull
-        uses: actions/checkout@v4
-        echo 'hello world'
+      - uses: actions/checkout@v4
+      
+      - name: Dire bonjour
+        run: echo "Hello, world!" 
