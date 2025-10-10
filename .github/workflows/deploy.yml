@@ -11,16 +11,5 @@ jobs:
 
     steps:
       - name: Connexion au serveur et Git Pull
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }} # L'adresse de ton serveur
-          username: ${{ secrets.SSH_USER }} # Ton nom d'utilisateur SSH
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # Le secret contenant ta clé privée SSH
-          port: 22
-          script: |
-            # Navigue vers le répertoire de ton projet sur le serveur
-            cd /home/mbroumsadja/send_file_speedly/
-            # Exécute la commande git pull pour mettre à jour le code
-            git pull origin main
-            # Ajoute d'autres commandes ici si nécessaire
-            # Par exemple, redémarrer un service, installer des dépendances, etc.
+        uses: actions/checkout@v4
+        echo 'hello world'
