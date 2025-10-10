@@ -22,7 +22,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ssh.alwaysdata.com >> ~/.ssh/known_hosts
 
-      # Étape 3 : Synchroniser le dossier avec AlwaysData via SCP
+      # Étape 3 : Synchroniser le répertoire racine avec AlwaysData via SCP
       - name: Deploy to AlwaysData
         run: |
-          scp -r ./path/to/your/folder user@ssh.alwaysdata.com:/path/to/remote/folder
+          scp -r ./* mbroumsadja@ssh-mbroumsadja.alwaysdata.com:/home/mbroumsadja/send_file_speedly
