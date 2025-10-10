@@ -18,6 +18,10 @@
 2- **_elle ne gere que quel que aspect de la messagerie en ligne mais neamoins utile pour discuter directement_**
 3- **_l'utilisateur d'android peut envoyer un fichier mais le recevras pas lui meme mais dans le cas contraire tous les autre oporateur desktop ou laptop le recevrons ._**
 
+## Utilisation 
+
+<video src="./public/powe-spirit-demo.webm" alt="Texte alternatif" autoplay></video>/>
+
 ## Technologies utilisées
 
 ### Backend
