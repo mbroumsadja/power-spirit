@@ -1,24 +1,31 @@
-name : deployement automatique
+name: Déploiement automatique
 
 on:
-    push:
-        branches:
-            - main
-jobs:
-    deploy:
-        runs-on: ubuntu-latest
+  push:
+    branches:
+      - main
 
-        steps:
-            - name: recuperation du code 
-              uses: actions/checkout@v4
-            
-            - name: config ssh
-              run: |
-                mkdir -p ~/.ssh
-                echo "${{ secrets.ssh_key }}" > ~/.ssh/id_ed25519
-                chmod 600 ~/.ssh/id_ed25519
-                ssh-keyscan ssh-mbroumsadja.alwaysdata.net >> ~/.ssh/known_hosts
-            - name: synchronisation avec mon serveur
-              run: |
-                rsync -avz --delete ./send_file_speedly/ \
-                mbroumsadja@ssh-mbroumsadja.alwaysdata.net:/home/mbroumsadja/send_file_speedly/
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Configuration SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ssh-mbroumsadja.alwaysdata.net >> ~/.ssh/known_hosts
+          
+      - name: Test de connexion SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no mbroumsadja@ssh-mbroumsadja.alwaysdata.net "echo 'Connexion SSH réussie'"
+
+      - name: Synchronisation avec le serveur
+        run: |
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+          ./send_file_speedly/ \
+          mbroumsadja@ssh-mbroumsadja.alwaysdata.net:/home/mbroumsadja/send_file_speedly/
