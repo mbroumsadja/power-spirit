@@ -1,6 +1,6 @@
 # send_file_speedly
 
-[!POWER SPIRIT](https://github.com/mbroumsadja/send_file_speedly/public/power.png)
+<img src="./public/power.png" alt="Texte alternatif" width="100" />
 
 ## Description
 
