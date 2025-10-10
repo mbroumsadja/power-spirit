@@ -1,14 +1,7 @@
-CREATE TABLE room (
+CREATE TABLE file (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom TEXT NOT NULL,
-    etat TEXT,
-    access TEXT UNIQUE,
+    name_file TEXT NOT NULL,
+    sender_name TEXT,
+    taille INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE message (
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    receiver_id INTEGER,
-    content TEXT NOT NULL,
-    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (group_id) REFERENCES room(ID)
 );

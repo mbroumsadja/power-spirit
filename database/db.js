@@ -5,24 +5,16 @@ export const db = new Database("chat.db");
 function _init() {
   db.exec(
     `
-CREATE TABLE room (
+CREATE TABLE file (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom TEXT NOT NULL,
-    etat TEXT,
-    access TEXT UNIQUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE message (
-    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-    receiver_id INTEGER,
-    content TEXT NOT NULL,
+    name_file TEXT NOT NULL,
+    sender_name TEXT,
     taille INTEGER,
-    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (receiver_id) REFERENCES room(ID)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
     `
   );
   console.log("La base de donnee et les tables ont été crée avec succes");
 }
 
-export default db
+export default db;

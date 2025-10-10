@@ -1,0 +1,7 @@
+[
+    {
+        "title":"ajoute la fonctionnaliter pour dire qu'un client c'est deconnecter",
+        "description":"dire juste sur l'ecran qu'un utilisateur est connecter ou deconnecter suivie de son nom",
+        "label":"Urgent"
+    }
+]

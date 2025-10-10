@@ -15,7 +15,9 @@ html(lang="fr")
     #messages
     
     #form-container
-      input#username-input(placeholder="Votre nom" required autocomplete="off")
+      .juste_aligner
+       input#username-input(placeholder="Votre nom" required autocomplete="off")
+       a#lien(href="/file")  Historique
       #upload-status.upload-progress
       form#form
         input#input(placeholder="Message..." required autocomplete="off")
