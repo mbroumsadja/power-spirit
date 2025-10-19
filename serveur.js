@@ -1,12 +1,12 @@
 import express from "express";
-import path from "path";
+import path from "node:path";
 import favicon from "serve-favicon";
-import { createServer } from "http";
+import { createServer } from "node:http";
 import { Server } from "socket.io";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 import db from "./database/db.js";
 import multer from "multer";
-import fs from "fs";
+import fs from "node:fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +44,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max
+    fileSize: 50 * 1024 * 1024, // 50MB max
   },
   fileFilter: (req, file, cb) => {
     // Types autorisés
@@ -77,6 +77,7 @@ app.post("/upload", upload.single("file"), (req, res) => {
   stmt.run(req.file.filename, username, req.file.size);
   console.log("enregistrer dans la base de donnee");
   // Envoyer les infos du fichier à tous les clients via Socket.IO
+
   io.emit("file", {
     username: username,
     filename: req.file.originalname,
@@ -85,7 +86,14 @@ app.post("/upload", upload.single("file"), (req, res) => {
     filesize: req.file.size,
     timestamp: new Date().toLocaleTimeString(),
   });
-
+  io.emit("historique", {
+    username: username,
+    filename: req.file.originalname,
+    fileUrl: fileUrl,
+    filetype: req.file.mimetype,
+    filesize: req.file.size,
+    timestamp: new Date().toLocaleTimeString(),
+  });
   res.json({
     success: true,
     fileUrl: fileUrl,
@@ -108,6 +116,16 @@ app.get("/", (req, res) => {
 app.get("/file", async (req, res) => {
   let stmt = db.prepare(`SELECT * FROM file`);
   const data = stmt.all();
+
+  for (let maps of data) {
+    io.emit("historique", {
+      username: maps.sender_name,
+      filename: maps.name_file,
+      filesize: maps.taille,
+      timestamp: maps.created_at,
+    });
+  }
+
   res.send({
     success: true,
     data,
@@ -123,7 +141,6 @@ function broadcastUserCount() {
   io.emit("user-count", getUserCount());
 }
 io.on("connection", (socket) => {
-
   // Envoyer le nombre d'utilisateurs à tous
   broadcastUserCount();
   // Recevoir un message du client

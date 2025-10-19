@@ -12,6 +12,7 @@ const fileInput = document.getElementById("file-input");
 const fileBtn = document.getElementById("file-btn");
 const userCountElement = document.getElementById("user-count-number");
 const uploadStatus = document.getElementById("upload-status");
+const historique = document.getElementById("historique");
 
 socket.on("user-count", (count) => {
   userCountElement.textContent = count;
@@ -51,8 +52,8 @@ fileInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
 
   if (file && username.value) {
-    // Limite de taille (10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Limite de taille (50MB)
+    if (file.size > 50 * 1024 * 1024) {
       alert("Le fichier est trop volumineux (max 10MB)");
       return;
     }
@@ -64,7 +65,7 @@ fileInput.addEventListener("change", async (e) => {
 
     // Afficher l'état d'upload
     fileBtn.classList.add("uploading");
-    input.textContent = `Envoi de ${file.name}...`;
+    uploadStatus.textContent = `Encours d'envoi ${file.name}...`;
 
     try {
       const response = await fetch("/upload", {
@@ -117,7 +118,7 @@ socket.on("file", (data) => {
   if (data.filetype.startsWith("image/")) {
     fileContent = `<div class="file-preview">
       <a href="/file${data.fileUrl}" target="_blank">
-        <img src="${data.fileUrl}" alt="${data.filename}">
+        <img src="/file${data.fileUrl}" alt="${data.filename}">
       </a>
       <div class="file-size">${fileSize}</div>
     </div>`;
@@ -144,6 +145,34 @@ socket.on("file", (data) => {
   scrollToBottom();
 });
 
+socket.on("historique", (data) => {
+  const div = document.createElement("div");
+  div.className = "msg";
+
+  let fileContent = "";
+  const fileSize = formatFileSize(data.filesize);
+
+  fileContent = `<div class="file-preview">
+      <a href="/file${data.fileUrl}" download="${
+    data.filename
+  }" class="file-link">
+        <span>📄 ${escapeHtml(data.filename)}</span>
+        <span class="file-size">${fileSize}</span>
+      </a>
+    </div>`;
+
+  div.innerHTML = `
+    <div class="username">
+      ${escapeHtml(data.username)}
+      <span class="timestamp">${data.timestamp}</span>
+    </div>
+    ${fileContent}
+  `;
+
+  historique.appendChild(div);
+  scrollToBottom();
+});
+
 // Utilitaires
 function scrollToBottom() {
   messages.scrollTop = messages.scrollHeight;
@@ -165,4 +194,5 @@ function formatFileSize(bytes) {
 
 socket.on("connect", () => {
   console.log("Connecté au serveur");
+  fetch("http://localhost:3000/file");
 });

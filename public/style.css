@@ -7,9 +7,9 @@
 .power,
 .logo {
   display: flex;
-  justify-content: center;
+  justify-content: end;
   align-items: center;
-  font-size: 2rem;
+  font-size: 1.4rem;
   gap: 1rem;
   padding: 0.5rem;
 }
@@ -53,8 +53,30 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 75%;
+  position: absolute;
+  right: 0;
+  height: 70%;
+  margin-top: 3.5rem;
 }
-
+.msg {
+  background: white;
+  padding: 5px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 99%;
+  word-wrap: break-word;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+.titre {
+  text-align: center;
+  margin-left: 18vh;
+  margin-top: 2rem;
+  font-size: 20px;
+  color: rgb(0, 3, 39);
+  font-weight: 900;
+}
 .message {
   background: white;
   padding: 12px;
@@ -63,7 +85,6 @@ h1 {
   max-width: 45vh;
   word-wrap: break-word;
 }
-
 .username {
   font-weight: 600;
   color: #007bff;
@@ -88,8 +109,8 @@ h1 {
 }
 
 .file-preview img {
-  max-width: 100px;
-  max-height: 300px;
+  max-width: 200px;
+  max-height: 400px;
   border-radius: 8px;
 }
 
@@ -111,6 +132,9 @@ h1 {
   padding: 12px;
   border-radius: 15px;
   border-top: 5px solid #ddd;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 #username-input {
@@ -196,9 +220,21 @@ h1 {
   margin-top: 5px;
 }
 
+#historique {
+  position: absolute;
+  width: 25%;
+  height: 80%;
+  overflow-y: scroll;
+  background-color: gainsboro;
+}
+
 @media (max-width: 480px) {
   #messages {
     padding: 10px;
+    width: 100vw;
+  }
+  .titre {
+    margin-left: 6rem;
   }
   #form-container {
     padding: 10px;
@@ -206,11 +242,35 @@ h1 {
   h1 {
     font-size: 1.1rem;
   }
+  .logo,
+  .power {
+    margin-right: 1rem;
+  }
+  #historique {
+    position: absolute;
+    bottom: 8rem;
+    flex-direction: column;
+    overflow-x: scroll;
+    width: 100vw;
+    height: 10vh;
+    padding: 1rem;
+  }
 }
 
 #user-count-number {
   font-weight: 700;
   color: #007bff;
+}
+
+#upload-status {
+  position: absolute;
+  top: -6rem;
+  right: 2rem;
+  color: gray;
+  border-radius: 5px;
+  font-size: 15px;
+  font-family: system-ui;
+  background-color: rgba(8, 235, 8, 0.37);
 }
 
 @media (min-width: 480px) {

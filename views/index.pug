@@ -13,12 +13,13 @@ html(lang="fr")
         strong POWER SPIRIT
         span#user-count-number 0
     #messages
-    
+    #historique
+      span.titre HISTORIQUE
     #form-container
       .juste_aligner
        input#username-input(placeholder="Votre nom" required autocomplete="off")
-       a#lien(href="/file")  Historique
-      #upload-status.upload-progress
+       a#lien(href="#")  Historique
+      #upload-status.upload-progress 
       form#form
         input#input(placeholder="Message..." required autocomplete="off")
         button.btn#file-btn(type="button" title="Joindre un fichier")

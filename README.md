@@ -8,7 +8,6 @@
 
 ## Fonctionnalités
 
-- connecter a la room
 - Transfert de fichiers rapide entre différents appareils
 - Partage simultané à plusieurs utilisateurs
 - Sécurité renforcée pour les échanges de fichiers
@@ -44,6 +43,7 @@
 
 / (route principale)
 /uploads (pour enregistrer les fichiers)
+/file
 
 ## Base de donnee
 

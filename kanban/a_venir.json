@@ -3,5 +3,30 @@
         "title":"ajoute la fonctionnaliter pour dire qu'un client c'est deconnecter",
         "description":"dire juste sur l'ecran qu'un utilisateur est connecter ou deconnecter suivie de son nom",
         "label":"Urgent"
+    },
+    {
+        "title":"ajouter une barre pour affichier l'historiuqe des fichier",
+        "description":"",
+        "label":""
+    },
+    {
+        "title":"previsualiser les documents a l'envoie coe dans les historiques",
+        "description":"",
+        "label":""
+    },
+    {
+        "title":"Commencer a parler de cela au personne autour de moi",
+        "description":"",
+        "label":""
+    },
+    {
+        "title":"compresser les fichiers avant de les enregistres",
+        "description":"",
+        "label":""
+    },
+    {
+        "title":"gere l'affichage de reponse et question de gauche a droite",
+        "description":"",
+        "label":""
     }
 ]
