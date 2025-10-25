@@ -194,5 +194,5 @@ function formatFileSize(bytes) {
 
 socket.on("connect", () => {
   console.log("Connecté au serveur");
-  fetch("http://localhost:3000/file");
+  fetch("https://mbroumsadja.alwaysdata.net/file");
 });
