@@ -194,5 +194,15 @@ function formatFileSize(bytes) {
 
 socket.on("connect", () => {
   console.log("Connecté au serveur");
-  fetch("https://mbroumsadja.alwaysdata.net/file");
+fetch('https://mbroumsadja.alwaysdata.net')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Erreur réseau' + response.statusText);
+    }
+     console.log('reussie');
+  })
+  .catch(error => {
+    console.error('Il y a eu un problème avec l\'opération fetch :', error);
+  });
+
 });
