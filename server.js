@@ -1,5 +1,5 @@
 // Serveur Express + Socket.IO + Next.js.
-// Rien n'est stocké : le serveur relaie les messages et fichiers en mémoire vive, puis les oublie.
+// Rien n'est stocké : le serveur relaie les messages et  en mémoire vive, puis les oublie.
 const express = require("express");
 const http = require("http");
 const next = require("next");
@@ -132,6 +132,6 @@ nextApp.prepare().then(() => {
   app.use((req, res) => handle(req, res));
 
   server.listen(port, "0.0.0.0", () => {
-    console.log(`> Prêt sur http://localhost:${port} (fichiers jusqu'à ${MAX_FILE_MB} Mo)`);
+    console.log(`> Prêt sur http://localhost:${port} ( jusqu'à ${MAX_FILE_MB} Mo)`);
   });
 });

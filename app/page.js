@@ -185,8 +185,8 @@ export default function Home() {
     return (
       <main className="join">
         <form className="join-box" onSubmit={join}>
-          <h1>📮 Partage</h1>
-          <p>Discute et envoie des fichiers. Rien n'est conservé : si tu actualises la page, tout disparaît.</p>
+          <h1>📮 power spirit</h1>
+          <p>Discute et envoie des . Rien n'est conservé : si tu actualises la page, tout disparaît.</p>
           <label htmlFor="pseudo"><b>Ton pseudo</b></label>
           <input id="pseudo" value={nameInput} maxLength={20} autoFocus autoComplete="off"
             onChange={(e) => setNameInput(e.target.value)} placeholder="Ex. Amina" />
@@ -205,7 +205,7 @@ export default function Home() {
   return (
     <div className="app">
       <header className="top">
-        <h1>📮 Partage</h1>
+        <h1>📮 power spirit</h1>
         <span className="grow" />
         <span className="pill">{me}{iAmAdmin ? " · admin" : ""}</span>
         <span className={`pill ${connected ? "" : "off"}`}>{connected ? "en ligne" : "reconnexion…"}</span>
@@ -240,7 +240,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          {users.length <= 1 && <p><small>Tu es seul pour l'instant. Partage l'adresse de cette page sur ton réseau.</small></p>}
+          {users.length <= 1 && <p><small>Tu es seul pour l'instant. power spirit l'adresse de cette page sur ton réseau.</small></p>}
         </aside>
 
         <main
