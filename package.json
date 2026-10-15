@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
-    "build": "next build",
-    "start": "cross-env NODE_ENV=production node server.js"
-  },
+  "dev": "node server.js",
+  "build": "next build",
+  "start": "cross-env NODE_ENV=production node server.js",
+  "postinstall": "next build"
+},
   "dependencies": {
     "cross-env": "^7.0.3",
     "express": "^4.21.2",
