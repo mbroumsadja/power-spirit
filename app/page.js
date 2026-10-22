@@ -18,6 +18,14 @@ function fmtSize(n) {
   return `${(n / 1024 / 1024).toFixed(1)} Mo`;
 }
 
+// Identifiant propre à cet onglet : permet de reprendre sa place après une coupure,
+// même si le serveur n'a pas encore détecté l'ancienne connexion. (getRandomValues marche aussi en http)
+function makeSid() {
+  const a = new Uint8Array(16);
+  crypto.getRandomValues(a);
+  return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function Avatar({ name }) {
   const a = avatarOf(name);
   return <span className="av" style={{ background: a.color }}>{a.emoji}</span>;
@@ -31,6 +39,10 @@ export default function Home() {
   const endRef = useRef(null);
   const fileInputRef = useRef(null);
   const toastTimer = useRef(null);
+  const sidRef = useRef(null);
+  const chunkRef = useRef(512 * 1024);
+  const incomingRef = useRef(new Map()); // fichiers en cours de réception : id -> { meta, parts }
+  const uploadingRef = useRef(false);
 
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
@@ -45,6 +57,7 @@ export default function Home() {
   const [draft, setDraft] = useState("");
   const [toast, setToast] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [upload, setUpload] = useState(null); // { name, pct } pendant un envoi
 
   const flash = useCallback((text) => {
     setToast(text);
@@ -75,11 +88,12 @@ export default function Home() {
   useEffect(() => {
     const socket = io();
     socketRef.current = socket;
+    sidRef.current = makeSid();
 
     socket.on("connect", () => {
       // Reconnexion automatique après une coupure : on reprend le même pseudo
       if (nameRef.current) {
-        socket.emit("join", { name: nameRef.current }, (res) => {
+        socket.emit("join", { name: nameRef.current, sid: sidRef.current }, (res) => {
           if (res.ok) setConnected(true);
           else resetToJoin(res.error);
         });
@@ -87,15 +101,29 @@ export default function Home() {
         setConnected(true);
       }
     });
-    socket.on("disconnect", () => setConnected(false));
+    socket.on("disconnect", () => {
+      incomingRef.current.clear(); // réceptions interrompues
+      setConnected(false);
+    });
     socket.on("users", setUsers);
     socket.on("system", (s) => addMessage("room", { id: s.id, kind: "system", text: s.text, ts: s.ts }));
     socket.on("message", (m) => {
       const key = m.to == null ? "room" : `u:${m.from}`;
       addMessage(key, { id: m.id, kind: "text", from: m.from, text: m.text, ts: m.ts, mine: false });
     });
-    socket.on("file", (f) => {
-      const url = URL.createObjectURL(new Blob([f.data], { type: f.type }));
+    // Réception par morceaux : start -> chunk (x N) -> end
+    socket.on("file:start", (meta) => incomingRef.current.set(meta.id, { meta, parts: [] }));
+    socket.on("file:chunk", ({ id, data }) => {
+      const inc = incomingRef.current.get(id);
+      if (inc) inc.parts.push(data);
+    });
+    socket.on("file:abort", ({ id }) => incomingRef.current.delete(id));
+    socket.on("file:end", ({ id }) => {
+      const inc = incomingRef.current.get(id);
+      if (!inc) return;
+      incomingRef.current.delete(id);
+      const f = inc.meta;
+      const url = URL.createObjectURL(new Blob(inc.parts, { type: f.type }));
       urlsRef.current.push(url);
       const key = f.to == null ? "room" : `u:${f.from}`;
       addMessage(key, {
@@ -118,11 +146,12 @@ export default function Home() {
   const join = (e) => {
     e.preventDefault();
     setJoinError("");
-    socketRef.current.emit("join", { name: nameInput }, (res) => {
+    socketRef.current.emit("join", { name: nameInput, sid: sidRef.current }, (res) => {
       if (!res.ok) return setJoinError(res.error);
       nameRef.current = res.name;
       setMe(res.name);
       setMaxFile(res.maxFileSize);
+      if (res.chunkSize) chunkRef.current = res.chunkSize;
       setJoined(true);
     });
   };
@@ -149,23 +178,58 @@ export default function Home() {
     setDraft("");
   };
 
+  // Émet un évènement et attend l'accusé de réception (avec délai max)
+  const emitAck = (event, payload) =>
+    new Promise((resolve) => {
+      const s = socketRef.current;
+      if (!s || !s.connected) return resolve({ ok: false, error: "Connexion perdue pendant l'envoi." });
+      s.timeout(30000).emit(event, payload, (err, res) =>
+        resolve(err ? { ok: false, error: "Le serveur ne répond pas." } : res));
+    });
+
+  // Envoi par morceaux : le fichier n'est jamais chargé en entier en mémoire et la connexion
+  // reste libre pour les "ping" (sinon le serveur coupe la connexion sur les gros fichiers).
   const sendFiles = async (list) => {
+    const files = Array.from(list); // à copier tout de suite : la liste est vidée après le onChange
     if (!canSend) return flash("Impossible d'envoyer pour le moment.");
+    if (uploadingRef.current) return flash("Un envoi est déjà en cours, patiente un instant.");
     const key = active;
     const to = target;
-    for (const file of Array.from(list)) {
-      if (file.size === 0) { flash(`${file.name} est vide.`); continue; }
-      if (file.size > maxFile) { flash(`${file.name} dépasse ${fmtSize(maxFile)}.`); continue; }
-      const data = await file.arrayBuffer();
-      socketRef.current.emit("file", { to, name: file.name, type: file.type, data }, (res) => {
-        if (!res.ok) return flash(res.error);
+    uploadingRef.current = true;
+    try {
+      for (const file of files) {
+        if (file.size === 0) { flash(`${file.name} est vide.`); continue; }
+        if (file.size > maxFile) { flash(`${file.name} dépasse ${fmtSize(maxFile)}.`); continue; }
+
+        const start = await emitAck("file:start", { to, name: file.name, type: file.type, size: file.size });
+        if (!start.ok) { flash(start.error); continue; }
+
+        const chunk = chunkRef.current;
+        let failed = false;
+        setUpload({ name: file.name, pct: 0 });
+        for (let off = 0, index = 0; off < file.size; off += chunk, index++) {
+          const data = await file.slice(off, off + chunk).arrayBuffer();
+          const r = await emitAck("file:chunk", { uploadId: start.uploadId, index, data });
+          if (!r.ok) { flash(r.error); failed = true; break; }
+          setUpload({ name: file.name, pct: Math.min(100, Math.round(((off + data.byteLength) / file.size) * 100)) });
+        }
+        if (failed) {
+          socketRef.current?.emit("file:cancel", { uploadId: start.uploadId });
+          continue;
+        }
+
+        const end = await emitAck("file:end", { uploadId: start.uploadId });
+        if (!end.ok) { flash(end.error); continue; }
         const url = URL.createObjectURL(file);
         urlsRef.current.push(url);
         addMessage(key, {
-          id: res.id, kind: "file", from: me, ts: res.ts, mine: true,
+          id: end.id, kind: "file", from: me, ts: end.ts, mine: true,
           file: { name: file.name, type: file.type, size: file.size, url },
         });
-      });
+      }
+    } finally {
+      uploadingRef.current = false;
+      setUpload(null);
     }
   };
 
@@ -283,6 +347,13 @@ export default function Home() {
             )}
             <div ref={endRef} />
           </div>
+
+          {upload && (
+            <div className="upload" role="status">
+              <span>📤 {upload.name} — {upload.pct} %</span>
+              <div className="bar"><div style={{ width: `${upload.pct}%` }} /></div>
+            </div>
+          )}
 
           <div className="composer">
             <input ref={fileInputRef} type="file" multiple hidden

@@ -1,0 +1,367 @@
+diff --git a/app/globals.css b/app/globals.css
+index a6196c7..7fcc385 100644
+--- a/app/globals.css
++++ b/app/globals.css
+@@ -131,3 +131,7 @@ input, textarea {
+   .chan .label { max-width: 110px; }
+ }
+ @media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
++
++.upload { padding: 8px 16px; border-top: var(--line); background: var(--sky); font-size: 14px; }
++.upload .bar { margin-top: 6px; height: 10px; border: var(--line); background: var(--paper); }
++.upload .bar > div { height: 100%; background: var(--mint); transition: width .15s linear; }
+diff --git a/app/page.js b/app/page.js
+index eddfc31..943d376 100644
+--- a/app/page.js
++++ b/app/page.js
+@@ -18,6 +18,14 @@ function fmtSize(n) {
+   return `${(n / 1024 / 1024).toFixed(1)} Mo`;
+ }
+ 
++// Identifiant propre à cet onglet : permet de reprendre sa place après une coupure,
++// même si le serveur n'a pas encore détecté l'ancienne connexion. (getRandomValues marche aussi en http)
++function makeSid() {
++  const a = new Uint8Array(16);
++  crypto.getRandomValues(a);
++  return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
++}
++
+ function Avatar({ name }) {
+   const a = avatarOf(name);
+   return <span className="av" style={{ background: a.color }}>{a.emoji}</span>;
+@@ -31,6 +39,10 @@ export default function Home() {
+   const endRef = useRef(null);
+   const fileInputRef = useRef(null);
+   const toastTimer = useRef(null);
++  const sidRef = useRef(null);
++  const chunkRef = useRef(512 * 1024);
++  const incomingRef = useRef(new Map()); // fichiers en cours de réception : id -> { meta, parts }
++  const uploadingRef = useRef(false);
+ 
+   const [connected, setConnected] = useState(false);
+   const [joined, setJoined] = useState(false);
+@@ -45,6 +57,7 @@ export default function Home() {
+   const [draft, setDraft] = useState("");
+   const [toast, setToast] = useState("");
+   const [dragging, setDragging] = useState(false);
++  const [upload, setUpload] = useState(null); // { name, pct } pendant un envoi
+ 
+   const flash = useCallback((text) => {
+     setToast(text);
+@@ -75,11 +88,12 @@ export default function Home() {
+   useEffect(() => {
+     const socket = io();
+     socketRef.current = socket;
++    sidRef.current = makeSid();
+ 
+     socket.on("connect", () => {
+       // Reconnexion automatique après une coupure : on reprend le même pseudo
+       if (nameRef.current) {
+-        socket.emit("join", { name: nameRef.current }, (res) => {
++        socket.emit("join", { name: nameRef.current, sid: sidRef.current }, (res) => {
+           if (res.ok) setConnected(true);
+           else resetToJoin(res.error);
+         });
+@@ -87,15 +101,29 @@ export default function Home() {
+         setConnected(true);
+       }
+     });
+-    socket.on("disconnect", () => setConnected(false));
++    socket.on("disconnect", () => {
++      incomingRef.current.clear(); // réceptions interrompues
++      setConnected(false);
++    });
+     socket.on("users", setUsers);
+     socket.on("system", (s) => addMessage("room", { id: s.id, kind: "system", text: s.text, ts: s.ts }));
+     socket.on("message", (m) => {
+       const key = m.to == null ? "room" : `u:${m.from}`;
+       addMessage(key, { id: m.id, kind: "text", from: m.from, text: m.text, ts: m.ts, mine: false });
+     });
+-    socket.on("file", (f) => {
+-      const url = URL.createObjectURL(new Blob([f.data], { type: f.type }));
++    // Réception par morceaux : start -> chunk (x N) -> end
++    socket.on("file:start", (meta) => incomingRef.current.set(meta.id, { meta, parts: [] }));
++    socket.on("file:chunk", ({ id, data }) => {
++      const inc = incomingRef.current.get(id);
++      if (inc) inc.parts.push(data);
++    });
++    socket.on("file:abort", ({ id }) => incomingRef.current.delete(id));
++    socket.on("file:end", ({ id }) => {
++      const inc = incomingRef.current.get(id);
++      if (!inc) return;
++      incomingRef.current.delete(id);
++      const f = inc.meta;
++      const url = URL.createObjectURL(new Blob(inc.parts, { type: f.type }));
+       urlsRef.current.push(url);
+       const key = f.to == null ? "room" : `u:${f.from}`;
+       addMessage(key, {
+@@ -118,11 +146,12 @@ export default function Home() {
+   const join = (e) => {
+     e.preventDefault();
+     setJoinError("");
+-    socketRef.current.emit("join", { name: nameInput }, (res) => {
++    socketRef.current.emit("join", { name: nameInput, sid: sidRef.current }, (res) => {
+       if (!res.ok) return setJoinError(res.error);
+       nameRef.current = res.name;
+       setMe(res.name);
+       setMaxFile(res.maxFileSize);
++      if (res.chunkSize) chunkRef.current = res.chunkSize;
+       setJoined(true);
+     });
+   };
+@@ -149,23 +178,58 @@ export default function Home() {
+     setDraft("");
+   };
+ 
++  // Émet un évènement et attend l'accusé de réception (avec délai max)
++  const emitAck = (event, payload) =>
++    new Promise((resolve) => {
++      const s = socketRef.current;
++      if (!s || !s.connected) return resolve({ ok: false, error: "Connexion perdue pendant l'envoi." });
++      s.timeout(30000).emit(event, payload, (err, res) =>
++        resolve(err ? { ok: false, error: "Le serveur ne répond pas." } : res));
++    });
++
++  // Envoi par morceaux : le fichier n'est jamais chargé en entier en mémoire et la connexion
++  // reste libre pour les "ping" (sinon le serveur coupe la connexion sur les gros fichiers).
+   const sendFiles = async (list) => {
++    const files = Array.from(list); // à copier tout de suite : la liste est vidée après le onChange
+     if (!canSend) return flash("Impossible d'envoyer pour le moment.");
++    if (uploadingRef.current) return flash("Un envoi est déjà en cours, patiente un instant.");
+     const key = active;
+     const to = target;
+-    for (const file of Array.from(list)) {
+-      if (file.size === 0) { flash(`${file.name} est vide.`); continue; }
+-      if (file.size > maxFile) { flash(`${file.name} dépasse ${fmtSize(maxFile)}.`); continue; }
+-      const data = await file.arrayBuffer();
+-      socketRef.current.emit("file", { to, name: file.name, type: file.type, data }, (res) => {
+-        if (!res.ok) return flash(res.error);
++    uploadingRef.current = true;
++    try {
++      for (const file of files) {
++        if (file.size === 0) { flash(`${file.name} est vide.`); continue; }
++        if (file.size > maxFile) { flash(`${file.name} dépasse ${fmtSize(maxFile)}.`); continue; }
++
++        const start = await emitAck("file:start", { to, name: file.name, type: file.type, size: file.size });
++        if (!start.ok) { flash(start.error); continue; }
++
++        const chunk = chunkRef.current;
++        let failed = false;
++        setUpload({ name: file.name, pct: 0 });
++        for (let off = 0, index = 0; off < file.size; off += chunk, index++) {
++          const data = await file.slice(off, off + chunk).arrayBuffer();
++          const r = await emitAck("file:chunk", { uploadId: start.uploadId, index, data });
++          if (!r.ok) { flash(r.error); failed = true; break; }
++          setUpload({ name: file.name, pct: Math.min(100, Math.round(((off + data.byteLength) / file.size) * 100)) });
++        }
++        if (failed) {
++          socketRef.current?.emit("file:cancel", { uploadId: start.uploadId });
++          continue;
++        }
++
++        const end = await emitAck("file:end", { uploadId: start.uploadId });
++        if (!end.ok) { flash(end.error); continue; }
+         const url = URL.createObjectURL(file);
+         urlsRef.current.push(url);
+         addMessage(key, {
+-          id: res.id, kind: "file", from: me, ts: res.ts, mine: true,
++          id: end.id, kind: "file", from: me, ts: end.ts, mine: true,
+           file: { name: file.name, type: file.type, size: file.size, url },
+         });
+-      });
++      }
++    } finally {
++      uploadingRef.current = false;
++      setUpload(null);
+     }
+   };
+ 
+@@ -284,6 +348,13 @@ export default function Home() {
+             <div ref={endRef} />
+           </div>
+ 
++          {upload && (
++            <div className="upload" role="status">
++              <span>📤 {upload.name} — {upload.pct} %</span>
++              <div className="bar"><div style={{ width: `${upload.pct}%` }} /></div>
++            </div>
++          )}
++
+           <div className="composer">
+             <input ref={fileInputRef} type="file" multiple hidden
+               onChange={(e) => { sendFiles(e.target.files); e.target.value = ""; }} />
+diff --git a/server.js b/server.js
+index 2b0bab7..c171671 100644
+--- a/server.js
++++ b/server.js
+@@ -10,6 +10,9 @@ const dev = process.env.NODE_ENV !== "production";
+ const port = parseInt(process.env.PORT || "3000", 10);
+ const MAX_FILE_MB = parseInt(process.env.MAX_FILE_MB || "50", 10);
+ const MAX_FILE = MAX_FILE_MB * 1024 * 1024;
++// Les fichiers sont envoyés par morceaux : un gros bloc unique bloque les "ping" de Socket.IO
++// et provoque une déconnexion (ping timeout) pendant l'envoi.
++const CHUNK_SIZE = 512 * 1024;
+ // Durée pendant laquelle une adresse IP exclue ne peut pas revenir (0 = pas de blocage)
+ const KICK_BLOCK_MS = parseInt(process.env.KICK_BLOCK_SECONDS || "30", 10) * 1000;
+ 
+@@ -20,7 +23,9 @@ const handle = nextApp.getRequestHandler();
+ 
+ nextApp.prepare().then(() => {
+   const io = new Server(server, {
+-    maxHttpBufferSize: MAX_FILE + 1024 * 1024,
++    maxHttpBufferSize: CHUNK_SIZE * 2 + 64 * 1024, // limite par message : un morceau, pas le fichier entier
++    pingInterval: 25000,
++    pingTimeout: 60000, // marge pour les connexions lentes
+     destroyUpgrade: false,
+   });
+ 
+@@ -39,6 +44,18 @@ nextApp.prepare().then(() => {
+   };
+   const system = (text) => io.to("joined").emit("system", { id: crypto.randomUUID(), text, ts: Date.now() });
+ 
++  // Remplace une entrée en gardant sa position (le premier de la liste est l'admin)
++  const replaceUser = (oldId, newId, value) => {
++    const entries = [...users];
++    users.clear();
++    for (const [id, u] of entries) users.set(id === oldId ? newId : id, id === oldId ? value : u);
++  };
++  // Relaie un évènement au salon (targetId = null) ou à une personne précise
++  const relay = (socket, targetId, event, data) => {
++    if (targetId) io.to(targetId).emit(event, data);
++    else socket.to("joined").emit(event, data);
++  };
++
+   // Envoie au salon (to = null) ou à une personne précise. Renvoie false si elle est partie.
+   const deliver = (socket, to, event, data) => {
+     if (to == null) {
+@@ -53,6 +70,8 @@ nextApp.prepare().then(() => {
+   };
+ 
+   io.on("connection", (socket) => {
++    const uploads = new Map(); // envois en cours de ce socket : id -> { meta, targetId, received, next }
++
+     socket.on("join", (payload, ack) => {
+       ack = typeof ack === "function" ? ack : () => { };
+       const until = blocked.get(socket.handshake.address);
+@@ -62,12 +81,27 @@ nextApp.prepare().then(() => {
+       const name = cleanName(payload && payload.name);
+       if (!name) return ack({ ok: false, error: "Choisis un pseudo (1 à 20 caractères)." });
+       const existing = findIdByName(name);
+-      if (existing && existing !== socket.id) return ack({ ok: false, error: "Ce pseudo est déjà pris, choisis-en un autre." });
++      if (existing && existing !== socket.id) {
++        // Même navigateur qui se reconnecte : l'ancienne connexion est un "fantôme" (coupure réseau,
++        // ping timeout...). On la remplace en gardant le pseudo et la place (admin) au lieu de refuser.
++        const sidIn = payload && typeof payload.sid === "string" ? payload.sid.slice(0, 64) : "";
++        if (!sidIn || users.get(existing).sid !== sidIn) {
++          return ack({ ok: false, error: "Ce pseudo est déjà pris, choisis-en un autre." });
++        }
++        replaceUser(existing, socket.id, { name, sid: sidIn });
++        const stale = io.sockets.sockets.get(existing);
++        if (stale) { stale.leave("joined"); stale.disconnect(true); }
++        socket.join("joined");
++        ack({ ok: true, name, maxFileSize: MAX_FILE, chunkSize: CHUNK_SIZE });
++        broadcastUsers();
++        return;
++      }
+ 
++      const sid = typeof (payload && payload.sid) === "string" ? payload.sid.slice(0, 64) : "";
+       const wasIn = users.has(socket.id);
+-      users.set(socket.id, { name });
++      users.set(socket.id, { name, sid });
+       socket.join("joined");
+-      ack({ ok: true, name, maxFileSize: MAX_FILE });
++      ack({ ok: true, name, maxFileSize: MAX_FILE, chunkSize: CHUNK_SIZE });
+       broadcastUsers();
+       if (!wasIn) system(`${name} a rejoint le salon`);
+     });
+@@ -83,25 +117,71 @@ nextApp.prepare().then(() => {
+       ack({ ok: true, id: msg.id, ts: msg.ts });
+     });
+ 
+-    socket.on("file", (payload, ack) => {
++    // Envoi de fichier en 3 temps : file:start -> file:chunk (x N) -> file:end.
++    // Le serveur relaie chaque morceau tout de suite : rien n'est assemblé ni conservé ici.
++    socket.on("file:start", (payload, ack) => {
+       ack = typeof ack === "function" ? ack : () => { };
+       const me = users.get(socket.id);
+       if (!me) return ack({ ok: false, error: "Tu n'es pas connecté." });
+-      const { name, type, data, to } = payload || {};
+-      if (!Buffer.isBuffer(data) || data.length === 0) return ack({ ok: false, error: "Fichier invalide ou vide." });
+-      if (data.length > MAX_FILE) return ack({ ok: false, error: `Fichier trop gros (max ${MAX_FILE_MB} Mo).` });
+-      const msg = {
++      const { name, type, size, to } = payload || {};
++      if (!Number.isInteger(size) || size <= 0) return ack({ ok: false, error: "Fichier invalide ou vide." });
++      if (size > MAX_FILE) return ack({ ok: false, error: `Fichier trop gros (max ${MAX_FILE_MB} Mo).` });
++      if (uploads.size >= 3) return ack({ ok: false, error: "Trop d'envois en même temps." });
++      let targetId = null;
++      if (to != null) {
++        targetId = findIdByName(to);
++        if (!targetId || targetId === socket.id) return ack({ ok: false, error: "Cette personne n'est plus connectée." });
++      }
++      const meta = {
+         id: crypto.randomUUID(),
+         from: me.name,
+-        to: null,
++        to: targetId ? users.get(targetId).name : null,
+         name: String(name || "fichier").slice(0, 200),
+         type: String(type || "application/octet-stream").slice(0, 100),
+-        size: data.length,
+-        data,
++        size,
+         ts: Date.now(),
+       };
+-      if (!deliver(socket, to, "file", msg)) return ack({ ok: false, error: "Cette personne n'est plus connectée." });
+-      ack({ ok: true, id: msg.id, ts: msg.ts });
++      uploads.set(meta.id, { meta, targetId, received: 0, next: 0 });
++      relay(socket, targetId, "file:start", meta);
++      ack({ ok: true, uploadId: meta.id });
++    });
++
++    socket.on("file:chunk", (payload, ack) => {
++      ack = typeof ack === "function" ? ack : () => { };
++      const up = uploads.get(payload && payload.uploadId);
++      if (!up) return ack({ ok: false, error: "Envoi inconnu ou annulé." });
++      const { index, data } = payload;
++      const bad = !Buffer.isBuffer(data) || data.length === 0 || data.length > CHUNK_SIZE * 2 || index !== up.next;
++      if (bad || up.received + data.length > up.meta.size) {
++        uploads.delete(up.meta.id);
++        relay(socket, up.targetId, "file:abort", { id: up.meta.id });
++        return ack({ ok: false, error: "Morceau de fichier invalide." });
++      }
++      up.received += data.length;
++      up.next += 1;
++      relay(socket, up.targetId, "file:chunk", { id: up.meta.id, index, data });
++      ack({ ok: true });
++    });
++
++    socket.on("file:end", (payload, ack) => {
++      ack = typeof ack === "function" ? ack : () => { };
++      const up = uploads.get(payload && payload.uploadId);
++      if (!up) return ack({ ok: false, error: "Envoi inconnu ou annulé." });
++      uploads.delete(up.meta.id);
++      if (up.received !== up.meta.size) {
++        relay(socket, up.targetId, "file:abort", { id: up.meta.id });
++        return ack({ ok: false, error: "Fichier incomplet." });
++      }
++      if (up.targetId && !users.has(up.targetId)) return ack({ ok: false, error: "Cette personne n'est plus connectée." });
++      relay(socket, up.targetId, "file:end", { id: up.meta.id });
++      ack({ ok: true, id: up.meta.id, ts: up.meta.ts });
++    });
++
++    socket.on("file:cancel", (payload) => {
++      const up = uploads.get(payload && payload.uploadId);
++      if (!up) return;
++      uploads.delete(up.meta.id);
++      relay(socket, up.targetId, "file:abort", { id: up.meta.id });
+     });
+ 
+     // Exclusion : réservée à l'admin (la personne connectée depuis le plus longtemps)
+@@ -121,6 +201,8 @@ nextApp.prepare().then(() => {
+     });
+ 
+     socket.on("disconnect", () => {
++      for (const up of uploads.values()) relay(socket, up.targetId, "file:abort", { id: up.meta.id });
++      uploads.clear();
+       const me = users.get(socket.id);
+       if (!me) return;
+       users.delete(socket.id);

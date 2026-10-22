@@ -131,3 +131,7 @@ input, textarea {
   .chan .label { max-width: 110px; }
 }
 @media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+
+.upload { padding: 8px 16px; border-top: var(--line); background: var(--sky); font-size: 14px; }
+.upload .bar { margin-top: 6px; height: 10px; border: var(--line); background: var(--paper); }
+.upload .bar > div { height: 100%; background: var(--mint); transition: width .15s linear; }
