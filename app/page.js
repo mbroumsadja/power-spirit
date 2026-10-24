@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import Logo, { Logomark } from "./components/Logo";
+import Icon from "./components/Icon";
 
 const EMOJIS = ["🐙", "🦊", "🐸", "🐼", "🦄", "🐯", "🐵", "🦉", "🐳", "🐢", "🦀", "🐝"];
 const COLORS = ["#ffd23f", "#ff9f8f", "#7fe3c0", "#b9a8ff", "#8fd3ff", "#ffb3d1"];
@@ -249,8 +251,8 @@ export default function Home() {
     return (
       <main className="join">
         <form className="join-box" onSubmit={join}>
-          <h1>📮 power spirit</h1>
-          <p>Discute et envoie des . Rien n'est conservé : si tu actualises la page, tout disparaît.</p>
+          <h1 className="brand"><Logo variant="stacked" /></h1>
+          <p>Discute et envoie des fichiers. Rien n'est conservé : si tu actualises la page, tout disparaît.</p>
           <label htmlFor="pseudo"><b>Ton pseudo</b></label>
           <input id="pseudo" value={nameInput} maxLength={20} autoFocus autoComplete="off"
             onChange={(e) => setNameInput(e.target.value)} placeholder="Ex. Amina" />
@@ -269,7 +271,7 @@ export default function Home() {
   return (
     <div className="app">
       <header className="top">
-        <h1>📮 power spirit</h1>
+        <h1 className="brand"><Logo variant="horizontal" /></h1>
         <span className="grow" />
         <span className="pill">{me}{iAmAdmin ? " · admin" : ""}</span>
         <span className={`pill ${connected ? "" : "off"}`}>{connected ? "en ligne" : "reconnexion…"}</span>
@@ -279,7 +281,7 @@ export default function Home() {
         <aside className="side">
           <h2>Connectés ({users.length})</h2>
           <button className={`chan ${active === "room" ? "active" : ""}`} onClick={() => openConvo("room")}>
-            <span className="av" style={{ background: "#fff" }}>🏠</span>
+            <span className="av" style={{ background: "#fff" }}><Icon name="home" /></span>
             <span className="label">Salon général</span>
             {unread.room > 0 && <span className="badge">{unread.room}</span>}
           </button>
@@ -304,7 +306,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          {users.length <= 1 && <p><small>Tu es seul pour l'instant. power spirit l'adresse de cette page sur ton réseau.</small></p>}
+          {users.length <= 1 && <p><small>Tu es seul pour l'instant. Partage l'adresse de cette page sur ton réseau.</small></p>}
         </aside>
 
         <main
@@ -314,13 +316,14 @@ export default function Home() {
           onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) sendFiles(e.dataTransfer.files); }}
         >
           <div className="thread-head">
-            {target == null ? "🏠 Salon général" : <><Avatar name={target} /> {target}</>}
+            {target == null ? <><Icon name="home" /> Salon général</> : <><Avatar name={target} /> {target}</>}
             {!targetOnline && <small>Cette personne est partie.</small>}
           </div>
 
           <div className="msgs">
             {messages.length === 0 && (
               <div className="empty">
+                <Logomark mood="sleep" size={96} />
                 <p><b>C'est calme ici.</b></p>
                 <p>Écris un message ou glisse un fichier dans cette zone.</p>
               </div>
@@ -335,11 +338,11 @@ export default function Home() {
                     <div className="text">{m.text}</div>
                   ) : (
                     <div className="file">
-                      <div className="info"><span className="av" style={{ background: "#fff" }}>📄</span>
+                      <div className="info"><span className="av" style={{ background: "#fff" }}><Icon name="file" /></span>
                         <span><b>{m.file.name}</b><br /><small>{fmtSize(m.file.size)}</small></span>
                       </div>
                       {m.file.type.startsWith("image/") && <img src={m.file.url} alt={m.file.name} />}
-                      <a href={m.file.url} download={m.file.name}>Télécharger</a>
+                      <a href={m.file.url} download={m.file.name}><Icon name="download" /> Télécharger</a>
                     </div>
                   )}
                 </div>
@@ -350,7 +353,7 @@ export default function Home() {
 
           {upload && (
             <div className="upload" role="status">
-              <span>📤 {upload.name} — {upload.pct} %</span>
+              <span><Icon name="upload" /> {upload.name} — {upload.pct} %</span>
               <div className="bar"><div style={{ width: `${upload.pct}%` }} /></div>
             </div>
           )}
@@ -358,13 +361,13 @@ export default function Home() {
           <div className="composer">
             <input ref={fileInputRef} type="file" multiple hidden
               onChange={(e) => { sendFiles(e.target.files); e.target.value = ""; }} />
-            <button onClick={() => fileInputRef.current.click()} disabled={!canSend}>📎 Fichier</button>
+            <button onClick={() => fileInputRef.current.click()} disabled={!canSend} aria-label="Joindre un fichier"><Icon name="paperclip" /><span className="btn-label">Fichier</span></button>
             <textarea
               rows={1} value={draft} placeholder={canSend ? "Écris un message…" : "Envoi impossible"} disabled={!canSend}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendText(); } }}
             />
-            <button onClick={sendText} disabled={!canSend || !draft.trim()}>Envoyer</button>
+            <button onClick={sendText} disabled={!canSend || !draft.trim()} aria-label="Envoyer le message"><Icon name="send" /><span className="btn-label">Envoyer</span></button>
           </div>
         </main>
       </div>

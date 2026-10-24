@@ -1,0 +1,118 @@
+/* ==========================================================================
+   power spirit — design tokens
+   Deux couches : 1) palette brute (marque)  2) tokens sémantiques (usage).
+   Les composants n'utilisent QUE les tokens sémantiques.
+   ========================================================================== */
+
+:root {
+  /* ——— 1. Palette de marque ——— */
+  --ps-ink: #1d1b2e;      /* encre : texte, contours, ombres dures */
+  --ps-paper: #ffffff;
+  --ps-sky: #dff3ff;      /* fond de l'app (clair) */
+  --ps-sun: #ffd23f;      /* action principale */
+  --ps-violet: #b9a8ff;   /* l'esprit : mascotte, admin */
+  --ps-mint: #5fd6a4;     /* succès, mes messages */
+  --ps-coral: #ff6f61;    /* alerte, exclusion */
+  --ps-violet-deep: #4b35c9; /* liens / accents texte sur clair */
+  --ps-ink-soft: #4a4766; /* texte secondaire sur clair */
+  --ps-lav: #f6f3ff;      /* texte sur sombre */
+
+  /* ——— 2. Tokens sémantiques — thème clair (défaut) ——— */
+  --bg: var(--ps-sky);
+  --bg-dots: rgba(29, 27, 46, 0.14);
+  --surface: var(--ps-paper);
+  --surface-2: #f3faff;          /* zones légèrement en retrait */
+  --text: var(--ps-ink);
+  --text-soft: var(--ps-ink-soft);
+  --border-color: var(--ps-ink);
+  --shadow-color: var(--ps-ink);
+  --link: var(--ps-violet-deep);
+
+  --primary: var(--ps-sun);          --on-primary: var(--ps-ink);
+  --primary-hover: #ffc400;
+  --accent: var(--ps-violet);        --on-accent: var(--ps-ink);
+  --success: var(--ps-mint);         --on-success: var(--ps-ink);
+  --danger: var(--ps-coral);         --on-danger: var(--ps-ink);
+  --mine: var(--ps-mint);            --on-mine: var(--ps-ink);
+  --hover: var(--ps-sky);
+  --focus: var(--ps-ink);
+  --overlay: rgba(255, 210, 63, 0.88);
+  --mark-body: var(--ps-violet);     /* logomark inline */
+  --mark-line: var(--ps-ink);
+
+  /* ——— Bordures, rayons, ombres dures ——— */
+  --bw: 2px;
+  --line: var(--bw) solid var(--border-color);
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+  --shadow-sm: 2px 2px 0 var(--shadow-color);
+  --shadow: 4px 4px 0 var(--shadow-color);
+  --shadow-lg: 6px 6px 0 var(--shadow-color);
+
+  /* ——— Espacement (grille 4) ——— */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+  --tap: 44px;                       /* cible tactile minimale */
+
+  /* ——— Typographie ——— */
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --fs-xs: 0.75rem;   /* 12 — méta, horodatage */
+  --fs-sm: 0.875rem;  /* 14 */
+  --fs-md: 1rem;      /* 16 — corps */
+  --fs-lg: 1.125rem;  /* 18 */
+  --fs-xl: 1.5rem;    /* 24 */
+  --fs-2xl: 2rem;     /* 32 */
+  --fs-3xl: 2.75rem;  /* 44 — display */
+
+  /* ——— Mouvement ——— */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+
+  /* ——— Couches ——— */
+  --z-header: 10;
+  --z-overlay: 50;
+  --z-toast: 100;
+}
+
+/* ——— Thème sombre : mêmes rôles, valeurs retravaillées (pas une simple inversion) ——— */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14121f;
+    --bg-dots: rgba(246, 243, 255, 0.09);
+    --surface: #1d1b2e;
+    --surface-2: #27243d;
+    --text: var(--ps-lav);
+    --text-soft: #b9b4d6;
+    --border-color: var(--ps-lav);
+    --shadow-color: #000000;
+    --link: var(--ps-violet);
+    --primary-hover: #ffe27a;
+    --hover: #2e2a47;
+    --focus: var(--ps-sun);
+    --danger: #ff8a7e;
+    --overlay: rgba(20, 18, 31, 0.9);
+    --mark-line: var(--ps-lav);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14121f;
+  --bg-dots: rgba(246, 243, 255, 0.09);
+  --surface: #1d1b2e;
+  --surface-2: #27243d;
+  --text: var(--ps-lav);
+  --text-soft: #b9b4d6;
+  --border-color: var(--ps-lav);
+  --shadow-color: #000000;
+  --link: var(--ps-violet);
+  --primary-hover: #ffe27a;
+  --hover: #2e2a47;
+  --focus: var(--ps-sun);
+  --danger: #ff8a7e;
+  --overlay: rgba(20, 18, 31, 0.9);
+  --mark-line: var(--ps-lav);
+}
