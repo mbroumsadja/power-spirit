@@ -219,6 +219,14 @@ label { font-family: var(--font-display); font-weight: 700; }
   .msgs { padding: var(--s-3); }
   .top { gap: var(--s-2); padding: var(--s-2) var(--s-3); }
   .brand svg { height: 28px; }
+  /* en-tête : jamais plus large que l'écran, le pseudo se tronque avec « … » */
+  .app, .top { min-width: 0; max-width: 100%; }
+  .brand { flex: none; }
+  .brand svg { height: 26px; }
+  .top .grow { display: none; }
+  .top .grow + .pill { margin-left: auto; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .top .pill { white-space: nowrap; }
+  .top .pill:last-child { flex: none; }
   .pill { font-size: var(--fs-xs); padding: 2px var(--s-2); }
   /* boutons du composer : icône seule, libellé conservé pour les lecteurs d'écran */
   .btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
