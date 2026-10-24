@@ -5,6 +5,7 @@ import { io } from "socket.io-client";
 import Logo, { Logomark } from "./components/Logo";
 import Icon from "./components/Icon";
 
+const SYSTEM_TTL_MS = 6000; // durée d'affichage des notifications « X a rejoint / est parti »
 const EMOJIS = ["🐙", "🦊", "🐸", "🐼", "🦄", "🐯", "🐵", "🦉", "🐳", "🐢", "🦀", "🐝"];
 const COLORS = ["#ffd23f", "#ff9f8f", "#7fe3c0", "#b9a8ff", "#8fd3ff", "#ffb3d1"];
 
@@ -108,7 +109,14 @@ export default function Home() {
       setConnected(false);
     });
     socket.on("users", setUsers);
-    socket.on("system", (s) => addMessage("room", { id: s.id, kind: "system", text: s.text, ts: s.ts }));
+    socket.on("system", (s) => {
+      // Notification éphémère : un doublon remplace le précédent, et tout disparaît après quelques secondes
+      setConvos((c) => ({
+        ...c,
+        room: [...(c.room || []).filter((m) => !(m.kind === "system" && m.text === s.text)), { id: s.id, kind: "system", text: s.text, ts: s.ts }],
+      }));
+      setTimeout(() => setConvos((c) => ({ ...c, room: (c.room || []).filter((m) => m.id !== s.id) })), SYSTEM_TTL_MS);
+    });
     socket.on("message", (m) => {
       const key = m.to == null ? "room" : `u:${m.from}`;
       addMessage(key, { id: m.id, kind: "text", from: m.from, text: m.text, ts: m.ts, mine: false });
